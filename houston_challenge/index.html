@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="Houston Rockets Coding Challenge" content="">
+    <meta name="Austin Lee" content="">    
+
+    <title>Houston Rockets Coding Challenge</title>
+    <link rel="shortcut icon" href="https://www.nba.com/rockets/sites/rockets/files/rocketsfavicon.ico" type="image/vnd.microsoft.icon" />    
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+
+  <body>
+    <main role="main" class="container-fluid">
+      <div class="starter-template" id="starter-template">
+        <h1>Sacramento Kings at Houston Rockets</h1>
+        <h4>Location: <span id="location">Toyota Center, Houston,TX</span></h4>        
+
+        <select id="gameTimes" value="Choose Time">                  
+        <option value="pregame">Pregame</option>
+        <option value="live"> Live</option>
+        <option value="halftime">Halftime</option>
+        <option value="postgame">Postgame</option>
+        </select>
+
+        <div class = "row">
+            <div class = "col-md-4">                
+                <object class="team-logo" data="https://i.cdn.turner.com/nba/nba/assets/logos/teams/primary/web/SAC.svg" width="100", height="100"></object>
+                <span id="v-pts">0</span>                
+            </div>
+            <div class = "col-md-4">
+            <table class="table table-responsive-sm score-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>T</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="v-scores"><td colspan="6">Game has not started</td></tr>
+                    <tr id="h-scores"></tr>
+                </tbody>
+            </table>
+            </div>
+            <div class = "col-md-4">                
+                <object class="team-logo" data="https://i.cdn.turner.com/nba/nba/assets/logos/teams/primary/web/HOU.svg" width="100", height="100"></object>
+                <span id="h-pts">0</span>
+            </div>
+        </div>
+
+          
+        <div class = "table-responsive-sm">
+        <table class ="table vplayer-stats stats" class="col-md-6">
+            <thead class="thead-dark" >
+                <tr class="stat-header">
+                    <th>STARTERS</th>
+                    <th>MIN</th>
+                    <th>FG</th>
+                    <th>3PT</th>
+                    <th>FT</th>
+                    <th>OREB</th>
+                    <th>DREB</th>
+                    <th>AST</th>
+                    <th>STL</th>
+                    <th>BLK</th>
+                    <th>TO</th>
+                    <th>PF</th>
+                    <th>+/-</th>
+                    <th>PTS</th>
+                </tr>
+            </thead>
+            <tbody id="visitors">
+                    <tr><td colspan="14">Game has not started</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class = "table-responsive-sm">
+        <table class ="table hplayer-stats stats" class="col-md-6">
+                <thead class="thead-dark" >
+                    <tr class="stat-header">
+                        <th>STARTERS</th>
+                        <th>MIN</th>
+                        <th>FG</th>
+                        <th>3PT</th>
+                        <th>FT</th>
+                        <th>OREB</th>
+                        <th>DREB</th>
+                        <th>AST</th>
+                        <th>STL</th>
+                        <th>BLK</th>
+                        <th>TO</th>
+                        <th>PF</th>
+                        <th>+/-</th>
+                        <th>PTS</th>
+                    </tr>
+                </thead>
+                <tbody id="home">
+                    <tr><td colspan="14">Game has not started</td></tr>
+                </tbody>
+            </table>
+        </div>
+         
+        
+      </div>
+      <div class="col-sm-12">
+      <div id="chart"></div>
+    </div>
+
+    </main><!--/.container -->
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <!-- Placed at the end of the document so the pages load faster -->
+   
+    <script>  
+   
+    // Update box score based on time
+    $("#gameTimes").change(function() { 
+        let position = this.value;
+        api_login(position)    
+    });
+
+   
+    function api_login(time) { 
+    
+    let v_playerString = ""
+    let h_playerString = ""
+    
+    fetch('https://htxrockets.com/api/archived-game/0022101142?state=' + time)
+    .then(response => response.json())
+    .then(data =>      
+       get_data(data)
+    );
+
+    function get_data(data){
+                
+        // poplulate scoreboard
+        document.getElementById("v-scores").innerHTML = `<tr><td>${data.g.vls.ta}</td><td>${data.g.vls.q1}</td>
+        <td>${data.g.vls.q2}</td><td>${data.g.vls.q3}</td><td>${data.g.vls.q4}</td><td>${data.g.vls.s}</td></tr>`
+        document.getElementById("h-scores").innerHTML = `<tr><td>${data.g.hls.ta}</td><td>${data.g.hls.q1}</td>
+        <td>${data.g.hls.q2}</td><td>${data.g.hls.q3}</td><td>${data.g.hls.q4}</td><td>${data.g.hls.s}</td></tr>`
+
+
+        //helper function - calculate percentages
+        function convert_to_percent(num1, num2){            
+            return ((num1/num2) * 100).toFixed(1)
+        }
+
+        gameLocation = document.getElementById("location") 
+        gameLocation.innerHTML = `${data.g.an}, ${data.g.ac},${data.g.as}`        
+        
+        //Check if game has started or not
+        if (data.g.vls.pstsg == null){
+            visitors.innerHTML = '<tr><td colspan="14">Game has not started</td></tr>'
+            home.innerHTML = '<tr><td colspan="14">Game has not started</td></tr>'
+            document.getElementById("v-scores").innerHTML = '<tr><td colspan="6">Game has not started</td></tr>'
+            document.getElementById("h-scores").innerHTML = ''
+            document.getElementById("v-pts").innerHTML = ''
+            document.getElementById("h-pts").innerHTML = ''
+            document.getElementById("v-pts").innerHTML = 0
+            document.getElementById("h-pts").innerHTML = 0
+            d3.select("svg").remove();
+        }
+        else {
+
+            let v_starterCount = 0
+            let h_starterCount = 0
+
+            document.getElementById("v-pts").innerHTML = data.g.vls.s
+            document.getElementById("h-pts").innerHTML = data.g.hls.s
+
+            // Visiting Team Player Stats
+            data.g.vls.pstsg.forEach(player => {
+
+                v_playerString += `<tr><td>${player.fn.charAt(0)}. ${player.ln}<span class="player-pos"> ${player.pos}</span></td><td>${player.min}</td>
+                    <td>${player.fgm}-${player.fga}</td><td>${player.tpm}-${player.tpa}</td><td>${player.ftm}-${player.fta}</td>
+                    <td>${player.oreb}</td><td>${player.dreb}</td><td>${player.reb}</td>
+                    <td>${player.stl}</td><td>${player.blk}</td><td>${player.pf}</td>
+                    <td>${player.tov}</td><td>${player.pm}</td><td>${player.pts}</td>
+                    </tr>` 
+
+                if (v_starterCount == 4){
+                    v_playerString += `<tr class="thead-dark bench-header">
+                        <th>BENCH</th>
+                        <th>MIN</th>
+                        <th>FG</th>
+                        <th>3PT</th>
+                        <th>FT</th>
+                        <th>OREB</th>
+                        <th>DREB</th>
+                        <th>AST</th>
+                        <th>STL</th>
+                        <th>BLK</th>
+                        <th>TO</th>
+                        <th>PF</th>
+                        <th>+/-</th>
+                        <th>PTS</th>
+                    </tr>` 
+                }    
+
+                v_starterCount++;
+                visitors = document.getElementById("visitors"),
+                visitors.innerHTML = v_playerString
+                
+            }),
+            
+            // Home Team Player Stats
+            data.g.hls.pstsg.forEach(player => {
+                
+                h_playerString += `<tr><td>${player.fn.charAt(0)}. ${player.ln}<span class="player-pos"> ${player.pos}</span></td><td>${player.min}</td>
+                    <td>${player.fgm}-${player.fga}</td><td>${player.tpm}-${player.tpa}</td><td>${player.ftm}-${player.fta}</td>
+                    <td>${player.oreb}</td><td>${player.dreb}</td><td>${player.reb}</td>
+                    <td>${player.stl}</td><td>${player.blk}</td><td>${player.pf}</td>
+                    <td>${player.tov}</td><td>${player.pm}</td><td>${player.pts}</td>
+                    </tr>` 
+                
+                if (h_starterCount == 4){
+                    h_playerString += `<tr class="thead-dark bench-header">
+                        <th>BENCH</th>
+                        <th>MIN</th>
+                        <th>FG</th>
+                        <th>3PT</th>
+                        <th>FT</th>
+                        <th>OREB</th>
+                        <th>DREB</th>
+                        <th>AST</th>
+                        <th>STL</th>
+                        <th>BLK</th>
+                        <th>TO</th>
+                        <th>PF</th>
+                        <th>+/-</th>
+                        <th>PTS</th>
+                    </tr>` 
+                }    
+
+                h_starterCount++;
+                
+                    
+                home = document.getElementById("home"),
+                home.innerHTML = h_playerString
+                
+            })
+        
+        //Team Stats Graphic
+        g_data = [
+            {
+                "stats": "PTS",
+                "visitor": data.g.vls.s,
+                "home": data.g.hls.s
+            },
+            {
+                "stats": "REB",
+                "visitor": data.g.vls.tstsg.reb,
+                "home": data.g.hls.tstsg.reb
+            },
+            {
+                "stats": "AST",
+                "visitor": data.g.vls.tstsg.ast,
+                "home": data.g.hls.tstsg.ast
+            },
+            {
+                "stats": "STL",
+                "visitor": data.g.vls.tstsg.stl,
+                "home": data.g.hls.tstsg.stl
+            },
+            {
+                "stats": "BLK",
+                "visitor": data.g.vls.tstsg.blk,
+                "home": data.g.hls.tstsg.blk
+            },
+            {
+                "stats": "TO",
+                "visitor": data.g.vls.tstsg.tov,
+                "home": data.g.hls.tstsg.tov
+            },
+            
+            
+            {
+                "stats": "FG%",
+                "visitor": convert_to_percent(data.g.vls.tstsg.fgm, data.g.vls.tstsg.fga),
+                "home": convert_to_percent(data.g.hls.tstsg.fgm, data.g.hls.tstsg.fga)
+            },
+            {
+                "stats": "3P%",
+                "visitor": convert_to_percent(data.g.vls.tstsg.tpm, data.g.vls.tstsg.tpa),
+                "home": convert_to_percent(data.g.hls.tstsg.tpm, data.g.hls.tstsg.tpa)
+            },
+            {
+                "stats": "FT%",
+                "visitor": convert_to_percent(data.g.vls.tstsg.ftm, data.g.vls.tstsg.fta),
+                "home": convert_to_percent(data.g.hls.tstsg.ftm, data.g.hls.tstsg.fta)
+            }
+            ]        
+        
+        var labelArea = 150;
+        var chart,
+                width = window.innerWidth,
+                bar_height = 20,
+                height = bar_height * 20;
+        var rightOffset = width + labelArea;
+
+        var lCol = "visitor";
+        var rCol = "home";
+        var xFrom = d3.scale.linear().domain([0,100])
+                .range([0, 100]);
+
+        
+        var xTo = d3.scale.linear().domain([0,100])
+                .range([0, 100]);
+        var y = d3.scale.ordinal()
+                .rangeBands([20, height]);
+        
+        d3.select("svg").remove();
+        
+        var chart = d3.select("#chart")
+        .append('svg')
+        .attr("viewBox", "0 0 " + (width) + " " + (height + 200))
+        .attr("preserveAspectRatio", "xMinYMin")
+        .attr('class', 'chart')
+                    
+            xTo.domain(d3.extent(g_data, function (d) {
+                return d[rCol];
+            }));
+    
+            y.domain(g_data.map(function (d) {
+                return d.stats;
+            }));
+    
+            var yPosByIndex = function (d) {
+                
+                return y(d.stats) + 50;
+            };
+            chart.selectAll("rect.left")
+                    .data(g_data)
+                    .enter().append("rect")
+                    .attr("x", function (d) {                        
+                        return width/2 - xFrom(d[lCol])-40;
+                    })
+                    .attr("y", yPosByIndex)
+                    .attr("class", "left")
+                    .attr("width", function (d) {
+                        return d[lCol];                        
+                    })
+                    .attr("height", y.rangeBand());
+            chart.selectAll("text.leftscore")
+                    .data(g_data)
+                    .enter().append("text")
+                    .attr("x", function (d) {
+                        return width/2- xFrom(d[lCol])-80;
+                    })
+                    .attr("y", function (d) {
+                        return y(d.stats) + y.rangeBand() / 2 + 50;
+                    })
+                    .attr("dx", "20")
+                    .attr("dy", ".36em")
+                    .attr("text-anchor", "end")
+                    .attr('class', 'leftscore')
+                    .text(function(d){return d[lCol];});
+            chart.selectAll("text.name")
+                    .data(g_data)
+                    .enter().append("text")
+                    .attr("x", width/2)
+                    .attr("y", function (d) {
+                        return y(d.stats) + y.rangeBand() / 2 + 50;
+                    })
+                    .attr("dy", ".20em")
+                    .attr("text-anchor", "middle")
+                    .attr('class', 'name')
+                    .text(function(d){return d.stats;});
+    
+            chart.selectAll("rect.right")
+                    .data(g_data)
+                    .enter().append("rect")
+                    .attr("x", width/2 + 40)
+                    .attr("y", yPosByIndex)
+                    .attr("class", "right")
+                    .attr("width", function (d) {
+                        return d[rCol];                        
+                    })
+                    .attr("height", y.rangeBand());
+            chart.selectAll("text.score")
+                    .data(g_data)
+                    .enter().append("text")
+                    .attr("x", function (d) {
+                        return xTo(d[rCol]) + width/2 + 100;
+                    })
+                    .attr("y", function (d) {
+                        return y(d.stats) + y.rangeBand() / 2 + 50;
+                    })
+                    .attr("dx", -5)
+                    .attr("dy", ".36em")
+                    .attr("text-anchor", "end")
+                    .attr('class', 'score')
+                    .text(function(d){return d[rCol];});
+            chart.append("text").attr("x",width/2-60).attr("y", 20).attr("class","chart-title").text("Team Stats");
+            chart.append("text").attr("x",rightOffset/2-255).attr("y", 53).attr("class","leftscore").text("Sacramento Kings");
+            chart.append("text").attr("x",rightOffset/2-35).attr("y", 53).attr("class","score").text("Houston Rockets");
+    }
+    }
+
+    }
+    
+    </script>
+   
+  </body>
+</html>
